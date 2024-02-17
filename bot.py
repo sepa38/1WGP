@@ -129,4 +129,19 @@ async def on_reaction_add(reaction, user):
     await channel.send("このチャンネルで画像、テキストの送受信をしてください")
 
 
+@client.event
+async def on_reaction_remove(reaction, user):
+    global participationMessage, participant_list
+
+    message = reaction.message
+
+    if participationMessage is None:
+        return
+
+    if message != participationMessage or user == client.user:
+        return
+
+    participant_list.remove(user)
+
+
 client.run(TOKEN)
