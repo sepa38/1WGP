@@ -3,7 +3,7 @@ import discord
 
 
 RAISED_HAND = "\N{Raised Hand}"
-NEW_GAME_MESSAGE = f"参加希望者はこのメッセージに {RAISED_HAND} のリアクションをつけてください"
+participationMessage = None
 
 try:
     with open("TOKEN.txt", mode = "r") as f:
@@ -37,7 +37,7 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    global HOME_CHANNEL_ID, isOngoing
+    global HOME_CHANNEL_ID, isOngoing, participationMessage, participant_list
 
     if not message.content.startswith("!"):
         return
@@ -58,8 +58,9 @@ async def on_message(message):
             await message.channel.send("現在進行中のゲームがあるようです。新しくゲームを始める場合、 \
                 ```\n!cancel_game\n```\nを用いて進行中のゲームを中断してください")
         else:
-            own_message = await message.channel.send(NEW_GAME_MESSAGE)
-            await own_message.add_reaction(RAISED_HAND)
+            participationMessage = await message.channel.send(f"参加希望者はこのメッセージに {RAISED_HAND} のリアクションをつけてください")
+            await participationMessage.add_reaction(RAISED_HAND)
+            participant_list = []
 
             isOngoing = 1
             with open("ONGOING.txt", mode = "w") as f:
@@ -67,7 +68,6 @@ async def on_message(message):
 
     elif message.content.startswith("!confirm"):
         if isOngoing:
-            participant_list = [] # FIXME: リアクションのとこで生成する。discord.user を格納
             participant_mention_list = [participant_i.mention for participant_i in participant_list]
             confirm_message = "以下のメンバーでゲームを開始します\n" + "\n".join(participant_mention_list)
             await message.channel.send(confirm_message)
@@ -78,6 +78,7 @@ async def on_message(message):
 
     elif message.content.startswith("!cancel_game"):
         isOngoing = 0
+        # TODO: isOngoing の保存
         await message.channel.send("現在進行中のゲームを中断しました")
 
     elif message.content.startswith("!send_subject"):
@@ -92,6 +93,38 @@ async def on_message(message):
 
     else:
         await message.channel.send("定義されていないコマンドです")
+
+
+@client.event
+async def on_reaction_add(reaction, user):
+    global participationMessage, participant_list
+
+    message = reaction.message
+    category = message.channel.category
+    channel_name = user.display_name
+
+    if participationMessage is None:
+        return
+
+    if message != participationMessage or user == client.user:
+        return
+
+    participant_list.append(user)
+
+    # 目的のチャンネルがすでに作られているとき
+    channel_name_list = [channel_i.name for channel_i in category.text_channels]
+    if channel_name in channel_name_list:
+        return
+
+    # プライベートチャンネルに設定するための dict
+    permission = {
+        message.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+        user: discord.PermissionOverwrite(read_messages=True)
+    }
+
+    channel = await category.create_text_channel(name=channel_name, overwrites=permission)
+
+    await channel.send("このチャンネルで画像、テキストの送受信をしてください")
 
 
 client.run(TOKEN)
