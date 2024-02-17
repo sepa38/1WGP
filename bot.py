@@ -1,3 +1,4 @@
+import os
 import discord
 
 
@@ -13,9 +14,9 @@ except:
 
 try:
     with open("ONGOING.txt", mode = "r") as f:
-        isOngoing = bool(f.read())
+        isOngoing = int(f.read())
 except:
-    isOngoing = False
+    isOngoing = 0
     with open("ONGOING.txt", mode = "w") as f:
         f.write(str(isOngoing))
 
@@ -32,6 +33,65 @@ client = discord.Client(intents=discord.Intents.all())
 @client.event
 async def on_ready():
     print("Successfully activated")
+
+
+@client.event
+async def on_message(message):
+    global HOME_CHANNEL_ID, isOngoing
+
+    if not message.content.startswith("!"):
+        return
+
+    elif message.content.startswith("!set_home_channel"):
+        HOME_CHANNEL_ID = message.channel.id
+
+        with open("HOME_CHANNEL_ID.txt", mode = "w") as f:
+            f.write(str(HOME_CHANNEL_ID))
+
+        await message.channel.send("このチャンネルを 1WGP のホームチャンネルに設定しました")
+
+    elif HOME_CHANNEL_ID is None:
+        await message.channel.send("```\n!set_home_channel\n```でホームチャンネルを設定してください")
+
+    elif message.content.startswith("!new_game"):
+        if isOngoing:
+            await message.channel.send("現在進行中のゲームがあるようです。新しくゲームを始める場合、 \
+                ```\n!cancel_game\n```\nを用いて進行中のゲームを中断してください")
+        else:
+            own_message = await message.channel.send(NEW_GAME_MESSAGE)
+            await own_message.add_reaction(RAISED_HAND)
+
+            isOngoing = 1
+            with open("ONGOING.txt", mode = "w") as f:
+                f.write(str(isOngoing))
+
+    elif message.content.startswith("!confirm"):
+        if isOngoing:
+            participant_list = [] # FIXME: リアクションのとこで生成する。discord.user を格納
+            participant_mention_list = [participant_i.mention for participant_i in participant_list]
+            confirm_message = "以下のメンバーでゲームを開始します\n" + "\n".join(participant_mention_list)
+            await message.channel.send(confirm_message)
+            
+            # TODO: 順番のシャッフルとか諸々の生成
+        else:
+            await message.channel.send("```\n!new_game\n```\nを用いてゲーム参加者を募集してください")
+
+    elif message.content.startswith("!cancel_game"):
+        isOngoing = 0
+        await message.channel.send("現在進行中のゲームを中断しました")
+
+    elif message.content.startswith("!send_subject"):
+        pass # TODO: 
+
+    elif message.content.startswith('!send_picture'):
+        save_path = "" # TODO: {ゲームを開始した日付}/{今のターン}/{参加者 ID} のようにする
+
+        attachment = message.attachments[0]
+        file_name = os.path.join(save_path, attachment.filename)
+        await attachment.save(file_name) # とりあえず保存するところまで
+
+    else:
+        await message.channel.send("定義されていないコマンドです")
 
 
 client.run(TOKEN)
