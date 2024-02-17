@@ -78,7 +78,9 @@ async def on_message(message):
 
     elif message.content.startswith("!cancel_game"):
         isOngoing = 0
-        # TODO: isOngoing の保存
+        with open("ONGOING.txt", mode = "w") as f:
+            f.write(str(isOngoing))
+
         await message.channel.send("現在進行中のゲームを中断しました")
 
     elif message.content.startswith("!send_subject"):
