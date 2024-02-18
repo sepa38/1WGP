@@ -130,7 +130,7 @@ async def on_message(message):
         targetPath = os.path.join(startDate, str(currentTurn))
         targetPath = os.path.join(targetPath, str(userIndex))
         with open(os.path.join(targetPath, "subject.txt")) as f:
-            f.write(message.content)
+            f.write(message.content) # FIXME: !send_subject ごと書き込まれる
 
         completedUsers.add(message.author.id)
         if len(completedUsers) == numberOfParticipants:
@@ -138,11 +138,29 @@ async def on_message(message):
             # next_job() TODO: send_picture とまとめる
 
     elif message.content.startswith('!send_picture'):
-        save_path = "" # TODO: {ゲームを開始した日付}/{今のターン}/{参加者 ID} のようにする
+        if message.channel not in individualChannelList:
+            return
+
+        if not isOngoing:
+            await message.channel.send("現在進行中のゲームがありません")
+            return
+
+        if currentTurn % 2 == 0:
+            await message.channel.send("現在、お題もしくは絵の説明を送信するフェーズです。\n```\n!send_subject\n```\nを用いて文章を送信してください")
+            return
+
+        userIndex = participant_ID_list.index(message.author.id)
+        targetPath = os.path.join(startDate, str(currentTurn))
+        targetPath = os.path.join(targetPath, str(userIndex))
 
         attachment = message.attachments[0]
-        file_name = os.path.join(save_path, attachment.filename)
-        await attachment.save(file_name) # とりあえず保存するところまで
+        fileName = os.path.join(targetPath, attachment.filename)
+        await attachment.save(fileName)
+        
+        completedUsers.add(message.author.id)
+        if len(completedUsers) == numberOfParticipants:
+            pass
+            # next_job() TODO: send_subject とまとめる
 
     else:
         await message.channel.send("定義されていないコマンドです")
