@@ -39,7 +39,8 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    global HOME_CHANNEL_ID, isOngoing, participationMessage, participant_list
+    # HACK: 後でクラスにまとめる
+    global HOME_CHANNEL_ID, isOngoing, participationMessage, participant_list, individualChannelList, currentTurn, completedUsers
 
     if not message.content.startswith("!"):
         return
@@ -63,6 +64,8 @@ async def on_message(message):
             participationMessage = await message.channel.send(f"参加希望者はこのメッセージに {RAISED_HAND} のリアクションをつけてください")
             await participationMessage.add_reaction(RAISED_HAND)
             participant_list = []
+            individualChannelList = []
+            completedUsers = set()
 
             isOngoing = 1
             with open("ONGOING.txt", mode = "w") as f:
@@ -112,7 +115,27 @@ async def on_message(message):
         await message.channel.send("現在進行中のゲームを中断しました")
 
     elif message.content.startswith("!send_subject"):
-        pass # TODO: 
+        if message.channel not in individualChannelList:
+            return
+
+        if not isOngoing:
+            await message.channel.send("現在進行中のゲームがありません")
+            return
+
+        if currentTurn % 2 == 1:
+            await message.channel.send("現在、絵を送信するフェーズです。\n```\n!send_picture\n```\nを用いて画像を送信してください")
+            return
+        
+        userIndex = participant_ID_list.index(message.author.id)
+        targetPath = os.path.join(startDate, str(currentTurn))
+        targetPath = os.path.join(targetPath, str(userIndex))
+        with open(os.path.join(targetPath, "subject.txt")) as f:
+            f.write(message.content)
+
+        completedUsers.add(message.author.id)
+        if len(completedUsers) == numberOfParticipants:
+            pass
+            # next_job() TODO: send_picture とまとめる
 
     elif message.content.startswith('!send_picture'):
         save_path = "" # TODO: {ゲームを開始した日付}/{今のターン}/{参加者 ID} のようにする
@@ -127,7 +150,7 @@ async def on_message(message):
 
 @client.event
 async def on_reaction_add(reaction, user):
-    global participationMessage, participant_list
+    global participationMessage, participant_list, individualChannelList
 
     message = reaction.message
     category = message.channel.category
@@ -142,9 +165,10 @@ async def on_reaction_add(reaction, user):
     participant_list.append(user)
 
     # 目的のチャンネルがすでに作られているとき
-    channel_name_list = [channel_i.name for channel_i in category.text_channels]
-    if channel_name in channel_name_list:
-        return
+    for channel_i in category.text_channels:
+        if channel_name == channel_i.name:
+            individualChannelList.append(channel_i)
+            return
 
     # プライベートチャンネルに設定するための dict
     permission = {
@@ -153,6 +177,8 @@ async def on_reaction_add(reaction, user):
     }
 
     channel = await category.create_text_channel(name=channel_name, overwrites=permission)
+
+    individualChannelList.append(channel)
 
     await channel.send("このチャンネルで画像、テキストの送受信をしてください")
 
