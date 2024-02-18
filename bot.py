@@ -1,4 +1,6 @@
 import os
+import datetime
+import random
 import discord
 
 
@@ -72,7 +74,33 @@ async def on_message(message):
             confirm_message = "以下のメンバーでゲームを開始します\n" + "\n".join(participant_mention_list)
             await message.channel.send(confirm_message)
             
-            # TODO: 順番のシャッフルとか諸々の生成
+            participant_ID_list = [str(participant_i.id) for participant_i in participant_list]
+            with open("participants_ID_list.txt", mode = "w") as f:
+                f.write(" ".join(participant_ID_list))
+
+            startDate = str(datetime.datetime.now().replace(microsecond=0))
+            startDate = startDate.replace(" ", "_").replace(":", "-")
+            os.mkdir(startDate)
+
+            numberOfParticipants = len(participant_list)
+            for turn in range(numberOfParticipants):
+                for user_index in range(numberOfParticipants):
+                    os.makedirs(f"{startDate}/{turn}/{user_index}")
+
+            passingTable = [[] for i in range(numberOfParticipants)]
+            for turn in range(numberOfParticipants):
+                for user_index in range(numberOfParticipants):
+                    user_tmp = participant_list[(turn+user_index)%numberOfParticipants]
+                    passingTable[turn].append(user_tmp)
+            random.shuffle(passingTable)
+
+            passingTableForSave = []
+            for turn in range(numberOfParticipants):
+                turnUsers = [str(user_tmp.id) for user_tmp in passingTable[turn]]
+                passingTableForSave.append(" ".join(turnUsers))
+            with open("passing_table.txt", mode = "w") as f:
+                f.write("\n".join(passingTableForSave))
+
         else:
             await message.channel.send("```\n!new_game\n```\nを用いてゲーム参加者を募集してください")
 
@@ -103,7 +131,7 @@ async def on_reaction_add(reaction, user):
 
     message = reaction.message
     category = message.channel.category
-    channel_name = user.display_name
+    channel_name = user.name
 
     if participationMessage is None:
         return
