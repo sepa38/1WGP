@@ -35,7 +35,7 @@ client = discord.Client(intents=discord.Intents.all())
 
 
 async def next_job():
-    global participant_list, individual_channel_list, passing_table, current_turn, number_of_participants, HOME_CHANNEL_ID, start_date, is_ongoing, completed_users
+    global participant_list, individual_channel_list, passing_table, current_turn, number_of_participants, HOME_CHANNEL_ID, start_date, is_ongoing, completed_users, deadline
     if current_turn == number_of_participants - 1:
         home_channel = client.get_channel(HOME_CHANNEL_ID)
         await home_channel.send("ゲームが終了しました")
@@ -78,6 +78,8 @@ async def next_job():
             
             print(game_index, destination_channel.name, next_user.name, target_path)
             await destination_channel.send(f"次のお題について絵を描いてください\n```\n{subject}\n```")
+        
+        deadline = datetime.date.today() + datetime.timedelta(days=7)
 
     else:
         for game_index in range(number_of_participants):
@@ -89,6 +91,8 @@ async def next_job():
             target_path = os.path.join(start_date, str(current_turn), str(game_index))
             file_name = os.listdir(target_path)[0]
             await destination_channel.send(f"次の絵の説明をしてください", file=discord.File(os.path.join(target_path, file_name)))
+        
+        deadline = datetime.date.today() + datetime.timedelta(days=1)
 
     completed_users = set()
     current_turn += 1
@@ -103,7 +107,7 @@ async def on_ready():
 @client.event
 async def on_message(message):
     # HACK: 後でクラスにまとめる
-    global HOME_CHANNEL_ID, is_ongoing, participation_message, participant_list, individual_channel_list, current_turn, completed_users, passing_table, number_of_participants, start_date, participant_id_list, individual_channel_list
+    global HOME_CHANNEL_ID, is_ongoing, participation_message, participant_list, individual_channel_list, current_turn, completed_users, passing_table, number_of_participants, start_date, participant_id_list, individual_channel_list, deadline
 
     if not message.content.startswith("!"):
         return
@@ -168,6 +172,8 @@ async def on_message(message):
                 passing_table_for_save.append(" ".join(turn_users))
             with open("passing_table.txt", mode = "w") as f:
                 f.write("\n".join(passing_table_for_save))
+            
+            deadline = datetime.date.today() + datetime.timedelta(days=7)
 
         else:
             await message.channel.send("```\n!new_game\n```\nを用いてゲーム参加者を募集してください")
@@ -276,5 +282,17 @@ async def on_reaction_remove(reaction, user):
 
     participant_list.remove(user)
 
+
+@tasks.loop(seconds=60)
+async def daily_job():
+    global deadline
+    now = datetime.datetime.now().strftime("%H:%M")
+    if now == "23:59":
+        today = datetime.date.today()
+        if today == deadline:
+            await next_job()
+
+
+daily_job.start()
 
 client.run(TOKEN)
