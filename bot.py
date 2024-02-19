@@ -1,7 +1,9 @@
 import os
 import datetime
 import random
+
 import discord
+from discord.ext import tasks
 
 
 RAISED_HAND = "\N{Raised Hand}"
@@ -32,6 +34,37 @@ except:
 client = discord.Client(intents=discord.Intents.all())
 
 
+async def next_job():
+    global participant_list, individual_channel_list, passing_table, current_turn, number_of_participants, HOME_CHANNEL_ID, start_date, is_ongoing
+    if current_turn == number_of_participants - 1:
+        home_channel = client.get_channel(HOME_CHANNEL_ID)
+        await home_channel.send("ゲームが終了しました")
+        
+        for game_index in range(number_of_participants):
+            first_participant = passing_table[0][game_index]
+            message = await home_channel.send(f"{first_participant.name} のお題")
+            thread = await message.create_thread(name = f"{first_participant.name} のお題")
+
+            for turn in range(number_of_participants):
+                target_path = os.path.join(start_date, str(turn))
+                target_path = os.path.join(target_path, str(game_index))
+                creator = passing_table[turn][game_index]
+
+                if turn % 2 == 0:
+                    with open(os.join(target_path, "subject.txt"), mode = "r") as f:
+                        subject = f.read()
+                    thread.send(f"{creator.mention}\n{subject}")
+                
+                else:
+                    file_name = os.listdir(target_path)[0]
+                    await thread.send(f"{creator.mention}", file=discord.File(os.path.join(target_path, file_name)))
+
+        is_ongoing = 0
+        with open("ongoing.txt", mode = "w") as f:
+            f.write(str(is_ongoing))
+
+        return
+
 @client.event
 async def on_ready():
     print("Successfully activated")
@@ -40,7 +73,7 @@ async def on_ready():
 @client.event
 async def on_message(message):
     # HACK: 後でクラスにまとめる
-    global HOME_CHANNEL_ID, is_ongoing, participation_message, participant_list, individual_channel_list, current_turn, completed_users
+    global HOME_CHANNEL_ID, is_ongoing, participation_message, participant_list, individual_channel_list, current_turn, completed_users, passing_table, number_of_participants, start_date
 
     if not message.content.startswith("!"):
         return
@@ -66,6 +99,7 @@ async def on_message(message):
             participant_list = []
             individual_channel_list = []
             completed_users = set()
+            current_turn = 0
 
             is_ongoing = 1
             with open("ongoing.txt", mode = "w") as f:
@@ -81,14 +115,14 @@ async def on_message(message):
             with open("participants_ID_list.txt", mode = "w") as f:
                 f.write(" ".join(participant_id_list))
 
-            startDate = str(datetime.datetime.now().replace(microsecond=0))
-            startDate = startDate.replace(" ", "_").replace(":", "-")
-            os.mkdir(startDate)
+            start_date = str(datetime.datetime.now().replace(microsecond=0))
+            start_date = start_date.replace(" ", "_").replace(":", "-")
+            os.mkdir(start_date)
 
             number_of_participants = len(participant_list)
             for turn in range(number_of_participants):
                 for user_index in range(number_of_participants):
-                    os.makedirs(f"{startDate}/{turn}/{user_index}")
+                    os.makedirs(f"{start_date}/{turn}/{user_index}")
 
             passing_table = [[] for i in range(number_of_participants)]
             for turn in range(number_of_participants):
@@ -127,7 +161,7 @@ async def on_message(message):
             return
         
         user_index = participant_id_list.index(message.author.id)
-        target_path = os.path.join(startDate, str(current_turn))
+        target_path = os.path.join(start_date, str(current_turn))
         target_path = os.path.join(target_path, str(user_index))
         with open(os.path.join(target_path, "subject.txt")) as f:
             f.write(message.content) # FIXME: !send_subject ごと書き込まれる
@@ -150,7 +184,7 @@ async def on_message(message):
             return
 
         user_index = participant_id_list.index(message.author.id)
-        target_path = os.path.join(startDate, str(current_turn))
+        target_path = os.path.join(start_date, str(current_turn))
         target_path = os.path.join(target_path, str(user_index))
 
         attachment = message.attachments[0]
