@@ -35,7 +35,7 @@ client = discord.Client(intents=discord.Intents.all())
 
 
 async def next_job():
-    global participant_list, individual_channel_list, passing_table, current_turn, number_of_participants, HOME_CHANNEL_ID, start_date, is_ongoing
+    global participant_list, individual_channel_list, passing_table, current_turn, number_of_participants, HOME_CHANNEL_ID, start_date, is_ongoing, completed_users
     if current_turn == number_of_participants - 1:
         home_channel = client.get_channel(HOME_CHANNEL_ID)
         await home_channel.send("ゲームが終了しました")
@@ -46,14 +46,13 @@ async def next_job():
             thread = await message.create_thread(name = f"{first_participant.name} のお題")
 
             for turn in range(number_of_participants):
-                target_path = os.path.join(start_date, str(turn))
-                target_path = os.path.join(target_path, str(game_index))
+                target_path = os.path.join(start_date, str(turn), str(game_index))
                 creator = passing_table[turn][game_index]
 
                 if turn % 2 == 0:
-                    with open(os.join(target_path, "subject.txt"), mode = "r") as f:
+                    with open(os.path.join(target_path, "subject.txt"), mode = "r") as f:
                         subject = f.read()
-                    thread.send(f"{creator.mention}\n{subject}")
+                    await thread.send(f"{creator.mention}\n{subject}")
                 
                 else:
                     file_name = os.listdir(target_path)[0]
@@ -65,6 +64,37 @@ async def next_job():
 
         return
 
+    # send_subject が全員分揃ったとき
+    if current_turn % 2 == 0:
+        for game_index in range(number_of_participants):
+            next_user = passing_table[current_turn+1][game_index]
+            for destination_channel in individual_channel_list:
+                if destination_channel.name == next_user.name:
+                    break
+
+            target_path = os.path.join(start_date, str(current_turn), str(game_index))
+            with open(os.path.join(target_path, "subject.txt"), mode = "r") as f:
+                subject = f.read()
+            
+            print(game_index, destination_channel.name, next_user.name, target_path)
+            await destination_channel.send(f"次のお題について絵を描いてください\n```\n{subject}\n```")
+
+    else:
+        for game_index in range(number_of_participants):
+            next_user = passing_table[current_turn+1][game_index]
+            for destination_channel in individual_channel_list:
+                if destination_channel.name == next_user.name:
+                    break
+            
+            target_path = os.path.join(start_date, str(current_turn), str(game_index))
+            file_name = os.listdir(target_path)[0]
+            await destination_channel.send(f"次の絵の説明をしてください", file=discord.File(os.path.join(target_path, file_name)))
+
+    completed_users = set()
+    current_turn += 1
+    return
+
+
 @client.event
 async def on_ready():
     print("Successfully activated")
@@ -73,7 +103,7 @@ async def on_ready():
 @client.event
 async def on_message(message):
     # HACK: 後でクラスにまとめる
-    global HOME_CHANNEL_ID, is_ongoing, participation_message, participant_list, individual_channel_list, current_turn, completed_users, passing_table, number_of_participants, start_date
+    global HOME_CHANNEL_ID, is_ongoing, participation_message, participant_list, individual_channel_list, current_turn, completed_users, passing_table, number_of_participants, start_date, participant_id_list, individual_channel_list
 
     if not message.content.startswith("!"):
         return
@@ -111,9 +141,10 @@ async def on_message(message):
             confirm_message = "以下のメンバーでゲームを開始します\n" + "\n".join(participant_mention_list)
             await message.channel.send(confirm_message)
             
-            participant_id_list = [str(participant_i.id) for participant_i in participant_list]
+            participant_id_list = [participant_i.id for participant_i in participant_list]
+            id_list_str = [str(id_i) for id_i in participant_id_list]
             with open("participants_ID_list.txt", mode = "w") as f:
-                f.write(" ".join(participant_id_list))
+                f.write(" ".join(id_list_str))
 
             start_date = str(datetime.datetime.now().replace(microsecond=0))
             start_date = start_date.replace(" ", "_").replace(":", "-")
@@ -133,8 +164,8 @@ async def on_message(message):
 
             passing_table_for_save = []
             for turn in range(number_of_participants):
-                turnUsers = [str(user_tmp.id) for user_tmp in passing_table[turn]]
-                passing_table_for_save.append(" ".join(turnUsers))
+                turn_users = [str(user_tmp.id) for user_tmp in passing_table[turn]]
+                passing_table_for_save.append(" ".join(turn_users))
             with open("passing_table.txt", mode = "w") as f:
                 f.write("\n".join(passing_table_for_save))
 
@@ -159,17 +190,15 @@ async def on_message(message):
         if current_turn % 2 == 1:
             await message.channel.send("現在、絵を送信するフェーズです。\n```\n!send_picture\n```\nを用いて画像を送信してください")
             return
-        
-        user_index = participant_id_list.index(message.author.id)
-        target_path = os.path.join(start_date, str(current_turn))
-        target_path = os.path.join(target_path, str(user_index))
-        with open(os.path.join(target_path, "subject.txt")) as f:
-            f.write(message.content) # FIXME: !send_subject ごと書き込まれる
+
+        user_index = passing_table[current_turn].index(message.author)
+        target_path = os.path.join(start_date, str(current_turn), str(user_index))
+        with open(os.path.join(target_path, "subject.txt"), mode = "w") as f:
+            f.write(message.content.replace("!send_subject", ""))
 
         completed_users.add(message.author.id)
         if len(completed_users) == number_of_participants:
-            pass
-            # next_job() TODO: send_picture とまとめる
+            await next_job()
 
     elif message.content.startswith('!send_picture'):
         if message.channel not in individual_channel_list:
@@ -183,9 +212,8 @@ async def on_message(message):
             await message.channel.send("現在、お題もしくは絵の説明を送信するフェーズです。\n```\n!send_subject\n```\nを用いて文章を送信してください")
             return
 
-        user_index = participant_id_list.index(message.author.id)
-        target_path = os.path.join(start_date, str(current_turn))
-        target_path = os.path.join(target_path, str(user_index))
+        user_index = passing_table[current_turn].index(message.author)
+        target_path = os.path.join(start_date, str(current_turn), str(user_index))
 
         attachment = message.attachments[0]
         file_name = os.path.join(target_path, attachment.filename)
@@ -193,8 +221,7 @@ async def on_message(message):
         
         completed_users.add(message.author.id)
         if len(completed_users) == number_of_participants:
-            pass
-            # next_job() TODO: send_subject とまとめる
+            await next_job()
 
     else:
         await message.channel.send("定義されていないコマンドです")
