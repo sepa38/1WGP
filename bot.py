@@ -101,6 +101,7 @@ async def next_job():
 
 @client.event
 async def on_ready():
+    daily_job.start()
     print("Successfully activated")
 
 
@@ -292,7 +293,5 @@ async def daily_job():
         if today == deadline:
             await next_job()
 
-
-daily_job.start()
 
 client.run(TOKEN)
