@@ -6,6 +6,34 @@ import discord
 from discord.ext import tasks
 
 
+class Game:
+    def __init__(self):
+        self.participants = []
+        self.individual_channels = []
+        self.is_accepting = 1
+
+    def start(self):
+        self.participants.sort(key = lambda user: user.name)
+        self.individual_channels.sort(key = lambda channel: channel.name)
+
+        self.number_of_participants = len(self.participants)
+        start_date = str(datetime.datetime.now().replace(microsecond=0))
+        self.start_date = start_date.replace(" ", "_").replace(":", "-")
+
+        self.passing_table = [[] for i in range(self.number_of_participants)]
+        for turn in range(self.number_of_participants):
+            for user_index in range(self.number_of_participants):
+                os.makedirs(f"{self.start_date}/{turn}/{user_index}")
+                user_tmp = self.participants[(turn+user_index)%self.number_of_participants]
+                self.passing_table[turn].append(user_tmp)
+        random.shuffle(passing_table)
+
+        self.deadline = str(datetime.date.today() + datetime.timedelta(days=7))
+        self.is_accepting = 0
+        self.is_ongoing = 1
+        self.current_turn = 0
+
+
 RAISED_HAND = "\N{Raised Hand}"
 participation_message = None
 
