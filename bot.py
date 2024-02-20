@@ -33,6 +33,52 @@ class Game:
         self.is_ongoing = 1
         self.current_turn = 0
 
+    def save(self):
+        try:
+            os.mkdir(os.path.join(self.start_date, "latest_game"))
+        except:
+            pass
+
+        with open(os.path.join("latest_game", "ongoing.txt"), mode = "w") as f:
+            f.write(str(self.is_ongoing))
+        with open(os.path.join("latest_game", "start_date.txt"), mode = "w") as f:
+            f.write(self.start_date)
+        with open(os.path.join("latest_game", "deadline.txt"), mode = "w") as f:
+            f.write(self.deadline)
+        with open(os.path.join("latest_game", "current_turn.txt"), mode = "w") as f:
+            f.write(str(self.current_turn))
+        with open(os.path.join("latest_game", "participants.txt"), mode = "w") as f:
+            f.write(" ".join([str(user.id) for user in self.participants]))
+        with open(os.path.join("latest_game", "passing_table.txt"), mode = "w") as f:
+            for turn in range(self.number_of_participants):
+                f.write(" ".join([str(user.id) for user in self.passing_table[turn]]))
+        with open(os.path.join("latest_game", "individual_channels.txt"), mode = "w") as f:
+            f.write(" ".join([str(channel.id) for channel in self.individual_channels]))
+
+    def load(self):
+        with open(os.path.join("latest_game", "ongoing.txt"), mode = "r") as f:
+            self.is_ongoing = int(f.read())
+        with open(os.path.join("latest_game", "start_date.txt"), mode = "r") as f:
+            self.start_date = f.read()
+        with open(os.path.join("latest_game", "deadline.txt"), mode = "r") as f:
+            self.deadline = f.read()
+        with open(os.path.join("latest_game", "current_turn.txt"), mode = "r") as f:
+            self.current_turn = int(f.read())
+        with open(os.path.join("latest_game", "participants.txt"), mode = "r") as f:
+            participants_id = list(map(int, f.read().split()))
+        self.participants = [client.get_user(user_id) for user_id in participants_id]
+        self.number_of_participants = len(self.participants)
+        passing_table_id = []
+        with open(os.path.join("latest_game", "passing_table.txt"), mode = "r") as f:
+            for turn in range(self.number_of_participants):
+                passing_table_id.append(list(map(int, f.read().split())))
+        self.passing_table = []
+        for turn in range(self.number_of_participants):
+            self.passing_table.append([client.get_user(user_id) for user_id in passing_table_id[turn]])
+        with open(os.path.join("latest_game", "individual_channels.txt"), mode = "r") as f:
+            individual_channels_id = list(map(int, f.read().split()))
+        self.individual_channels = [client.get_channel(channel_id) for channel_id in individual_channels_id]
+
 
 RAISED_HAND = "\N{Raised Hand}"
 participation_message = None
