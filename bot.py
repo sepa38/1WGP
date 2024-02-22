@@ -239,6 +239,19 @@ async def on_message(message):
     elif HOME_CHANNEL_ID is None:
         await message.channel.send("```\n!set_home_channel\n```でホームチャンネルを設定してください")
 
+    elif message.content.startswith("!give_admin_role"):
+        if message.channel.id != HOME_CHANNEL_ID:
+            return
+
+        if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
+            await message.channel.send("このコマンドを実行する権限がありません")
+
+        for user_mention in message.mentions:
+            member = message.guild.get_member(user_mention.id)
+            await member.add_roles(game_admin_role)
+
+            await message.channel.send(f"{member.mention} にゲーム管理者のロールを付与しました")
+
     elif message.content.startswith("!new_game"):
         if message.channel.id != HOME_CHANNEL_ID:
             return
