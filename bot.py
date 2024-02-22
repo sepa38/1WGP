@@ -115,7 +115,6 @@ class Game:
         self.deadline = str(datetime.date.today() + time_difference)
 
     async def next_job(self):
-        global HOHME_CHANNEL_ID
         if self.current_turn == self.number_of_participants - 1:
             home_channel = client.get_channel(HOME_CHANNEL_ID)
             await home_channel.send("ゲームが終了しました")
@@ -198,10 +197,6 @@ except:
 client = discord.Client(intents=discord.Intents.all())
 
 
-async def next_job():
-    global HOME_CHANNEL_ID, game
-
-
 @client.event
 async def on_ready():
     global game
@@ -223,10 +218,17 @@ async def on_ready():
 async def on_message(message):
     global HOME_CHANNEL_ID, game, participation_message
 
+    game_admin_role = discord.utils.get(message.guild.roles, name="1WGP_admin")
+    if game_admin_role is None:
+        game_admin_role = message.guild.create_role(name="1WGP_admin")
+
     if not message.content.startswith("!"):
         return
 
     elif message.content.startswith("!set_home_channel"):
+        if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
+            await message.channel.send("このコマンドを実行する権限がありません")
+
         HOME_CHANNEL_ID = message.channel.id
 
         with open("home_channel_id.txt", mode = "w") as f:
@@ -238,6 +240,12 @@ async def on_message(message):
         await message.channel.send("```\n!set_home_channel\n```でホームチャンネルを設定してください")
 
     elif message.content.startswith("!new_game"):
+        if message.channel.id != HOME_CHANNEL_ID:
+            return
+
+        if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
+            await message.channel.send("このコマンドを実行する権限がありません")
+
         if game.is_ongoing:
             await message.channel.send("現在進行中のゲームがあるようです。新しくゲームを始める場合、 \
                 ```\n!cancel_game\n```\nを用いて進行中のゲームを中断してください")
@@ -247,6 +255,12 @@ async def on_message(message):
             game = Game()
 
     elif message.content.startswith("!confirm"):
+        if message.channel.id != HOME_CHANNEL_ID:
+            return
+
+        if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
+            await message.channel.send("このコマンドを実行する権限がありません")
+
         if game.is_accepting:
             participant_mention_list = [participant_i.mention for participant_i in game.participants]
             confirm_message = "以下のメンバーでゲームを開始します\n" + "\n".join(participant_mention_list)
@@ -254,7 +268,6 @@ async def on_message(message):
 
             game.start()
             game.save()
-
         else:
             await message.channel.send("```\n!new_game\n```\nを用いてゲーム参加者を募集してください")
 
@@ -265,6 +278,9 @@ async def on_message(message):
 
     elif message.content.startswith("!send_subject"):
         if message.channel not in game.individual_channels:
+            return
+
+        if message.channel.name != message.author.name:
             return
 
         if not game.is_ongoing:
@@ -286,6 +302,9 @@ async def on_message(message):
 
     elif message.content.startswith('!send_picture'):
         if message.channel not in game.individual_channels:
+            return
+
+        if message.channel.name != message.author.name:
             return
 
         if not game.is_ongoing:
@@ -337,6 +356,7 @@ async def on_reaction_add(reaction, user):
     permission = {
         message.guild.default_role: discord.PermissionOverwrite(read_messages=False),
         user: discord.PermissionOverwrite(read_messages=True),
+        client.user: discord.PermissionOverwrite(read_messages=True)
     }
 
     channel = await category.create_text_channel(name=channel_name, overwrites=permission)
