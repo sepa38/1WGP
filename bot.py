@@ -228,6 +228,7 @@ async def on_message(message):
     elif message.content.startswith("!set_home_channel"):
         if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
             await message.channel.send("このコマンドを実行する権限がありません")
+            return
 
         HOME_CHANNEL_ID = message.channel.id
 
@@ -245,6 +246,7 @@ async def on_message(message):
 
         if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
             await message.channel.send("このコマンドを実行する権限がありません")
+            return
 
         for user_mention in message.mentions:
             member = message.guild.get_member(user_mention.id)
@@ -258,6 +260,7 @@ async def on_message(message):
 
         if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
             await message.channel.send("このコマンドを実行する権限がありません")
+            return
 
         if game.is_ongoing:
             await message.channel.send("現在進行中のゲームがあるようです。新しくゲームを始める場合、 \
@@ -273,6 +276,7 @@ async def on_message(message):
 
         if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
             await message.channel.send("このコマンドを実行する権限がありません")
+            return
 
         if game.is_accepting:
             participant_mention_list = [participant_i.mention for participant_i in game.participants]
