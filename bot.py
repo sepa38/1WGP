@@ -220,7 +220,7 @@ async def on_message(message):
 
     game_admin_role = discord.utils.get(message.guild.roles, name="1WGP_admin")
     if game_admin_role is None:
-        game_admin_role = message.guild.create_role(name="1WGP_admin")
+        game_admin_role = await message.guild.create_role(name="1WGP_admin")
 
     if not message.content.startswith("!"):
         return
