@@ -5,6 +5,7 @@ import random
 
 import discord
 from discord.ext import tasks
+from natsort import natsorted
 
 
 class Game:
@@ -127,14 +128,14 @@ class Game:
                 for turn in range(self.number_of_participants):
                     target_path = os.path.join(self.start_date, str(turn), str(game_index))
                     creator = self.passing_table[turn][game_index]
+                    file_name = natsorted(os.listdir(target_path))[-1]
 
                     if turn % 2 == 0:
-                        with open(os.path.join(target_path, "subject.txt"), mode = "r") as f:
+                        with open(os.path.join(target_path, file_name), mode = "r") as f:
                             subject = f.read()
                         await thread.send(f"{creator.mention}\n```\n{subject}\n```")
 
                     else:
-                        file_name = os.listdir(target_path)[0]
                         await thread.send(f"{creator.mention}", file=discord.File(os.path.join(target_path, file_name)))
 
             self.reset()
@@ -150,7 +151,8 @@ class Game:
                         break
 
                 target_path = os.path.join(self.start_date, str(self.current_turn), str(game_index))
-                with open(os.path.join(target_path, "subject.txt"), mode = "r") as f:
+                file_name = natsorted(os.listdir(target_path))[-1]
+                with open(os.path.join(target_path, file_name), mode = "r") as f:
                     subject = f.read()
 
                 await destination_channel.send(f"次のお題について絵を描いてください\n```\n{subject}\n```")
@@ -165,7 +167,7 @@ class Game:
                         break
 
                 target_path = os.path.join(self.start_date, str(self.current_turn), str(game_index))
-                file_name = os.listdir(target_path)[0]
+                file_name = natsorted(os.listdir(target_path))[-1]
                 await destination_channel.send(f"次の絵の説明をしてください", file=discord.File(os.path.join(target_path, file_name)))
 
             self.update_deadline(datetime.timedelta(days=1))
@@ -310,7 +312,8 @@ async def on_message(message):
 
         user_index = game.passing_table[game.current_turn].index(message.author)
         target_path = os.path.join(game.start_date, str(game.current_turn), str(user_index))
-        with open(os.path.join(target_path, "subject.txt"), mode = "w") as f:
+        files = os.listdir(target_path)
+        with open(os.path.join(target_path, f"{len(files)}_subject.txt"), mode = "w") as f:
             f.write(message.content.replace("!send_subject", ""))
 
         game.completed_users.add(message.author.id)
@@ -336,7 +339,8 @@ async def on_message(message):
         target_path = os.path.join(game.start_date, str(game.current_turn), str(user_index))
 
         attachment = message.attachments[0]
-        file_name = os.path.join(target_path, attachment.filename)
+        files = os.listdir(target_path)
+        file_name = os.path.join(target_path, f"{len(files)}_{attachment.filename}")
         await attachment.save(file_name)
 
         game.completed_users.add(message.author.id)
