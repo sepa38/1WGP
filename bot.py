@@ -128,7 +128,11 @@ class Game:
                 for turn in range(self.number_of_participants):
                     target_path = os.path.join(self.start_date, str(turn), str(game_index))
                     creator = self.passing_table[turn][game_index]
-                    file_name = natsorted(os.listdir(target_path))[-1]
+                    try:
+                        file_name = natsorted(os.listdir(target_path))[-1]
+                    except:
+                        await thread.send(f"{creator.mention} skipped")
+                        continue
 
                     if turn % 2 == 0:
                         with open(os.path.join(target_path, file_name), mode = "r") as f:
@@ -182,10 +186,17 @@ class Game:
                         except:
                             pass
 
+                await destination_channel.send(f"次のお題について絵を描いてください\n```\n{subject}\n```")
+
+                if (self.current_turn, game_index) == (turn, game_index_extra):
+                    continue
+
                 self.passing_table[self.current_turn][game_index] = self.passing_table[turn][game_index_extra]
                 self.save()
-
-                await destination_channel.send(f"次のお題について絵を描いてください\n```\n{subject}\n```")
+                original_path = os.path.join(self.start_date, str(turn), str(game_index_extra))
+                target_path = os.path.join(self.start_date, str(game.current_turn), str(game_index))
+                file_name = natsorted(os.listdir(original_path))[-1]
+                shutil.copy(os.path.join(original_path, file_name), os.path.join(target_path, file_name))
 
             self.update_deadline(datetime.timedelta(days=7))
 
@@ -218,10 +229,17 @@ class Game:
                         except:
                             pass
 
+                await destination_channel.send(f"次の絵の説明をしてください", file=discord.File(os.path.join(target_path, file_name)))
+                print((self.current_turn, game_index),  (turn, game_index_extra), (self.current_turn, game_index) == (turn, game_index_extra))
+                if (self.current_turn, game_index) == (turn, game_index_extra):
+                    continue
+
                 self.passing_table[self.current_turn][game_index] = self.passing_table[turn][game_index_extra]
                 self.save()
-
-                await destination_channel.send(f"次の絵の説明をしてください", file=discord.File(os.path.join(target_path, file_name)))
+                original_path = os.path.join(self.start_date, str(turn), str(game_index_extra))
+                target_path = os.path.join(self.start_date, str(game.current_turn), str(game_index))
+                file_name = natsorted(os.listdir(original_path))[-1]
+                shutil.copy(os.path.join(original_path, file_name), os.path.join(target_path, file_name))
 
             self.update_deadline(datetime.timedelta(days=1))
 
@@ -464,7 +482,7 @@ async def daily_job():
     global game
     now = datetime.datetime.now().strftime("%H:%M")
     if now == "23:59":
-        today = datetime.date.today()
+        today = str(datetime.date.today())
         if today == game.deadline:
             await game.next_job()
 
