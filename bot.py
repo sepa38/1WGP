@@ -142,12 +142,12 @@ class Game:
 
             return
 
+        game_indexes = [i for i in range(self.number_of_participants)]
+        random.shuffle(game_indexes)
+        game_indexes *= self.number_of_participants # 未提出があまりに多いとき対策
+
         # send_subject が全員分揃ったとき
         if self.current_turn % 2 == 0:
-            game_indexes = [i for i in range(self.number_of_participants)]
-            random.shuffle(game_indexes)
-            game_indexes *= self.number_of_participants # 未提出があまりに多いとき対策
-
             for game_index in range(self.number_of_participants):
                 next_user = self.passing_table[self.current_turn+1][game_index]
                 for destination_channel in self.individual_channels:
@@ -156,8 +156,8 @@ class Game:
 
                 # まず後ろにさかのぼる
                 turn = self.current_turn
-                subject = ""
                 game_index_extra = game_index
+                subject = ""
                 while turn >= 0:
                     target_path = os.path.join(self.start_date, str(turn), str(game_index_extra))
                     try:
@@ -170,8 +170,8 @@ class Game:
 
                 # それでも無いときは他のゲームから持ってくる
                 if subject == "":
+                    turn = self.current_turn
                     while True:
-                        turn = self.current_turn
                         game_index_extra = game_indexes.pop()
                         target_path = os.path.join(self.start_date, str(turn), str(game_index_extra))
                         try:
@@ -196,8 +196,31 @@ class Game:
                     if destination_channel.name == next_user.name:
                         break
 
-                target_path = os.path.join(self.start_date, str(self.current_turn), str(game_index))
-                file_name = natsorted(os.listdir(target_path))[-1]
+                turn = self.current_turn
+                game_index_extra = game_index
+                file_name = ""
+                while turn >= 0:
+                    target_path = os.path.join(self.start_date, str(self.current_turn), str(game_index_extra))
+                    try:
+                        file_name = natsorted(os.listdir(target_path))[-1]
+                        break
+                    except:
+                        turn -= 2
+
+                if file_name == "":
+                    turn = self.current_turn
+                    while True:
+                        game_index_extra = game_indexes.pop()
+                        target_path = os.path.join(self.start_date, str(self.current_turn), str(game_index_extra))
+                        try:
+                            file_name = natsorted(os.listdir(target_path))[-1]
+                            break
+                        except:
+                            pass
+
+                self.passing_table[self.current_turn][game_index] = self.passing_table[turn][game_index_extra]
+                self.save()
+
                 await destination_channel.send(f"次の絵の説明をしてください", file=discord.File(os.path.join(target_path, file_name)))
 
             self.update_deadline(datetime.timedelta(days=1))
