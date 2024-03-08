@@ -366,6 +366,17 @@ async def on_message(message):
 
         await message.channel.send("現在進行中のゲームを中断しました")
 
+    elif message.content.startswith("!skip_turn"):
+        if message.channel.id != HOME_CHANNEL_ID:
+            return
+
+        if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
+            await message.channel.send("このコマンドを実行する権限がありません")
+            return
+
+        if game.is_ongoing:
+            await game.next_job()
+
     elif message.content.startswith("!send_subject"):
         if message.channel not in game.individual_channels:
             return
