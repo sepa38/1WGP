@@ -377,6 +377,13 @@ async def on_message(message):
             await message.channel.send("```\n!new_game\n```\nを用いてゲーム参加者を募集してください")
 
     elif message.content.startswith("!cancel_game"):
+        if message.channel.id != HOME_CHANNEL_ID:
+            return
+
+        if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
+            await message.channel.send("このコマンドを実行する権限がありません")
+            return
+
         game.reset()
 
         await message.channel.send("現在進行中のゲームを中断しました")
