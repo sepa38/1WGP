@@ -48,6 +48,7 @@ class Game:
         self.is_ongoing = 1
         self.current_turn = 0
         self.completed_users = set()
+        self.unsubmitted_tasks = dict()
 
     def save(self):
         try:
@@ -70,6 +71,10 @@ class Game:
                 f.write(" ".join([str(user.id) for user in self.passing_table[turn]]) + "\n")
         with open(os.path.join("latest_game", "individual_channels.txt"), mode = "w") as f:
             f.write(" ".join([str(channel.id) for channel in self.individual_channels]))
+        with open(os.path.join("latest_game", "unsubmitted_tasks.txt"), mode = "w") as f:
+            for turn, game_index in self.unsubmitted_tasks.keys():
+                skipped_user = self.unsubmitted_tasks[(turn, game_index)]
+                f.write(f"{turn} {game_index} {skipped_user.id}\n")
 
     def load(self):
         with open(os.path.join("latest_game", "ongoing.txt"), mode = "r") as f:
@@ -99,6 +104,11 @@ class Game:
             target_path = os.path.join(self.start_date, str(self.current_turn), str(user_index))
             if len(os.listdir(target_path)) > 0:
                 self.completed_users.add(self.passing_table[self.current_turn][user_index])
+        self.unsubmitted_tasks = dict()
+        with open(os.path.join("latest_game", "unsubmitted_tasks.txt"), mode = "r") as f:
+            turn, game_index, skipped_user_id = map(int, f.readline().split())
+            skipped_user = client.get_user(skipped_user_id)
+            self.unsubmitted_tasks[(turn, game_index)] = skipped_user
 
     def append_participant(self, user):
         self.participants.append(user)
@@ -134,6 +144,10 @@ class Game:
                         await thread.send(f"{creator.mention} skipped")
                         continue
 
+                    if (turn, game_index) in self.unsubmitted_tasks:
+                        skipped_user = self.unsubmitted_tasks[(turn, game_index)]
+                        await thread.send(f"{skipped_user.mention} skipped")
+
                     if turn % 2 == 0:
                         with open(os.path.join(target_path, file_name), mode = "r") as f:
                             subject = f.read()
@@ -143,7 +157,6 @@ class Game:
                         await thread.send(f"{creator.mention}", file=discord.File(os.path.join(target_path, file_name)))
 
             self.reset()
-
             return
 
         game_indexes = [i for i in range(self.number_of_participants)]
@@ -170,7 +183,7 @@ class Game:
                             subject = f.read()
                         break
                     except:
-                        pass
+                        turn -= 2
 
                 # それでも無いときは他のゲームから持ってくる
                 if subject == "":
@@ -191,6 +204,7 @@ class Game:
                 if (self.current_turn, game_index) == (turn, game_index_extra):
                     continue
 
+                self.unsubmitted_tasks[(self.current_turn, game_index)] = self.passing_table[self.current_turn][game_index]
                 self.passing_table[self.current_turn][game_index] = self.passing_table[turn][game_index_extra]
                 self.save()
                 original_path = os.path.join(self.start_date, str(turn), str(game_index_extra))
@@ -234,6 +248,7 @@ class Game:
                 if (self.current_turn, game_index) == (turn, game_index_extra):
                     continue
 
+                self.unsubmitted_tasks[(self.current_turn, game_index)] = self.passing_table[self.current_turn][game_index]
                 self.passing_table[self.current_turn][game_index] = self.passing_table[turn][game_index_extra]
                 self.save()
                 original_path = os.path.join(self.start_date, str(turn), str(game_index_extra))
