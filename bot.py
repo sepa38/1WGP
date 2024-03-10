@@ -43,7 +43,7 @@ class Game:
                 self.passing_table[turn].append(user_tmp)
         random.shuffle(self.passing_table)
 
-        self.deadline = str(datetime.date.today() + datetime.timedelta(days=7))
+        self.deadline = str(datetime.date.today() + datetime.timedelta(days=1))
         self.is_accepting = 0
         self.is_ongoing = 1
         self.current_turn = 0
@@ -165,6 +165,8 @@ class Game:
 
         # send_subject が全員分揃ったとき
         if self.current_turn % 2 == 0:
+            self.update_deadline(datetime.timedelta(days=7))
+
             for game_index in range(self.number_of_participants):
                 next_user = self.passing_table[self.current_turn+1][game_index]
                 for destination_channel in self.individual_channels:
@@ -199,7 +201,7 @@ class Game:
                         except:
                             pass
 
-                await destination_channel.send(f"次のお題について絵を描いてください\n```\n{subject}\n```")
+                await destination_channel.send(f"次のお題について {self.deadline} 23:59 までに絵を描いて送信してください\n```\n{subject}\n```")
 
                 if (self.current_turn, game_index) == (turn, game_index_extra):
                     continue
@@ -212,9 +214,9 @@ class Game:
                 file_name = natsorted(os.listdir(original_path))[-1]
                 shutil.copy(os.path.join(original_path, file_name), os.path.join(target_path, file_name))
 
-            self.update_deadline(datetime.timedelta(days=7))
-
         else:
+            self.update_deadline(datetime.timedelta(days=1))
+
             for game_index in range(self.number_of_participants):
                 next_user = self.passing_table[self.current_turn+1][game_index]
                 for destination_channel in self.individual_channels:
@@ -243,7 +245,7 @@ class Game:
                         except:
                             pass
 
-                await destination_channel.send(f"次の絵の説明をしてください", file=discord.File(os.path.join(target_path, file_name)))
+                await destination_channel.send(f"次の絵の説明を {self.deadline} 23:59 までに送信してください", file=discord.File(os.path.join(target_path, file_name)))
                 print((self.current_turn, game_index),  (turn, game_index_extra), (self.current_turn, game_index) == (turn, game_index_extra))
                 if (self.current_turn, game_index) == (turn, game_index_extra):
                     continue
@@ -255,8 +257,6 @@ class Game:
                 target_path = os.path.join(self.start_date, str(game.current_turn), str(game_index))
                 file_name = natsorted(os.listdir(original_path))[-1]
                 shutil.copy(os.path.join(original_path, file_name), os.path.join(target_path, file_name))
-
-            self.update_deadline(datetime.timedelta(days=1))
 
         self.completed_users = set()
         self.current_turn += 1
@@ -373,6 +373,9 @@ async def on_message(message):
 
             game.start()
             game.save()
+
+            for individual_channel in game.individual_channels:
+                await individual_channel.send(f"{game.deadline} 23:59 までにお題を送信してください")
         else:
             await message.channel.send("```\n!new_game\n```\nを用いてゲーム参加者を募集してください")
 
