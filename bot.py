@@ -416,6 +416,13 @@ async def on_message(message):
 
         await message.channel.send(help_message, files=help_images)
 
+    elif message.content.startswith("!progress"):
+        if game.is_ongoing:
+            await message.channel.send(
+                f"現在の提出状況\n{len(game.completed_users)} / {game.number_of_participants}")
+        else:
+            await message.channel.send("現在進行中のゲームはないようです")
+
     elif message.content.startswith("!send_subject"):
         if message.channel not in game.individual_channels:
             return
