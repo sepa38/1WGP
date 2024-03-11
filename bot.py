@@ -402,6 +402,20 @@ async def on_message(message):
         if game.is_ongoing:
             await game.next_job()
 
+    elif message.content.startswith("!help"):
+        help_images = [
+            discord.File(os.path.join("help", "set_home_channel.png")),
+            discord.File(os.path.join("help", "new_game.png")),
+            discord.File(os.path.join("help", "confirm.png")),
+            discord.File(os.path.join("help", "send_subject.png")),
+            discord.File(os.path.join("help", "send_picture.png")),
+        ]
+
+        with open(os.path.join("help", "message.txt"), mode = "r") as f:
+            help_message = f.read()
+
+        await message.channel.send(help_message, files=help_images)
+
     elif message.content.startswith("!send_subject"):
         if message.channel not in game.individual_channels:
             return
