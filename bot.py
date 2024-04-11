@@ -437,6 +437,47 @@ async def on_message(message):
         if game.is_ongoing:
             await game.next_job()
 
+    elif message.content.startswith("!add_participants"):
+        if message.channel.id != HOME_CHANNEL_ID:
+            return
+
+        if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
+            await message.channel.send("このコマンドを実行する権限がありません")
+            return
+
+        if game.is_accepting:
+            for member in message.mentions:
+                # TODO: あとで on_reaction_add とまとめる
+                user = client.get_user(member.id)
+                category = message.channel.category
+                channel_name = user.name
+
+                game.append_participant(user)
+
+                # 目的のチャンネルがすでに作られているとき
+                channel_exists = 0
+                for channel_i in category.text_channels:
+                    if channel_name == channel_i.name:
+                        game.append_channel(channel_i)
+                        channel_exists = 1
+                        break
+
+                if channel_exists:
+                    continue
+
+                # プライベートチャンネルに設定するための dict
+                permission = {
+                    message.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                    user: discord.PermissionOverwrite(read_messages=True),
+                    client.user: discord.PermissionOverwrite(read_messages=True)
+                }
+
+                channel = await category.create_text_channel(name=channel_name, overwrites=permission)
+
+                game.append_channel(channel)
+
+                await channel.send("このチャンネルで画像、テキストの送受信をしてください")
+
     elif message.content.startswith("!help"):
         help_images = [
             discord.File(os.path.join("help", "set_home_channel.png")),
