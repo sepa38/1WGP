@@ -455,6 +455,14 @@ async def on_message(message):
             
             await message.channel.send("\n".join(subjects))
 
+    elif message.content.startswith("!show_turn"):
+        if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
+            await message.channel.send("このコマンドを実行する権限がありません")
+            return
+
+        if game.is_ongoing:
+            await message.channel.send(f"{game.current_turn}")
+
     elif message.content.startswith("!add_participants"):
         if message.channel.id != HOME_CHANNEL_ID:
             return
