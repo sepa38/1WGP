@@ -270,7 +270,7 @@ class Game:
                                 pass
 
                         turn = self.current_turn - turn_difference
-                        if turn < self.number_of_participants:
+                        if 0 <= turn < self.number_of_participants:
                             alternative_user = self.passing_table[turn][game_index]
                             game_index_extra = self.passing_table[self.current_turn].index(alternative_user)
                             target_path = os.path.join(self.start_date, str(self.current_turn), str(game_index_extra))
