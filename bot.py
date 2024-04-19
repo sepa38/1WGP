@@ -439,6 +439,22 @@ async def on_message(message):
         if game.is_ongoing:
             await game.next_job()
 
+    elif message.content.startswith("!show_subjects"):
+        if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
+            await message.channel.send("このコマンドを実行する権限がありません")
+            return
+
+        if game.is_ongoing:
+            subjects = []
+            for turn in range(0, game.current_turn, 2):
+                for game_index in range(game.number_of_participants):
+                    target_path = os.path.join(game.start_date, str(turn), str(game_index))
+                    file_name = natsorted(os.listdir(target_path))[-1]
+                    with open(os.path.join(target_path, file_name), mode = "r") as f:
+                        subjects.append(f"{turn} {game_index} ```{f.read()}```")
+            
+            await message.channel.send("\n".join(subjects))
+
     elif message.content.startswith("!add_participants"):
         if message.channel.id != HOME_CHANNEL_ID:
             return
