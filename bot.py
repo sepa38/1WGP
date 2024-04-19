@@ -106,7 +106,9 @@ class Game:
                 self.completed_users.add(self.passing_table[self.current_turn][user_index])
         self.unsubmitted_tasks = dict()
         with open(os.path.join("latest_game", "unsubmitted_tasks.txt"), mode = "r") as f:
-            turn, game_index, skipped_user_id = map(int, f.readline().split())
+            unsubmitted_tasks_tmp = f.readlines()
+        for task in unsubmitted_tasks_tmp:
+            turn, game_index, skipped_user_id = map(int, task.split())
             skipped_user = client.get_user(skipped_user_id)
             self.unsubmitted_tasks[(turn, game_index)] = skipped_user
 
@@ -447,7 +449,7 @@ async def on_message(message):
 
         if game.is_accepting:
             for member in message.mentions:
-                # TODO: あとで on_reaction_add とまとめる
+                # TODO: あとで on_reaction_add とまとめる。複数回追加される可能性あり
                 user = client.get_user(member.id)
                 category = message.channel.category
                 channel_name = user.name
