@@ -230,7 +230,7 @@ class Game:
                 self.unsubmitted_tasks[(self.current_turn, game_index)] = self.passing_table[self.current_turn][game_index]
                 self.passing_table[self.current_turn][game_index] = self.passing_table[turn][game_index_extra]
                 self.save()
-                original_path = os.path.join(self.start_date, str(turn), str(game_index_extra))
+                original_path = os.path.join(self.start_date, str(game.current_turn), str(game_index_extra))
                 target_path = os.path.join(self.start_date, str(game.current_turn), str(game_index))
                 file_name = natsorted(os.listdir(original_path))[-1]
                 shutil.copy(os.path.join(original_path, file_name), os.path.join(target_path, file_name))
@@ -290,7 +290,7 @@ class Game:
                 self.unsubmitted_tasks[(self.current_turn, game_index)] = self.passing_table[self.current_turn][game_index]
                 self.passing_table[self.current_turn][game_index] = self.passing_table[turn][game_index_extra]
                 self.save()
-                original_path = os.path.join(self.start_date, str(turn), str(game_index_extra))
+                original_path = os.path.join(self.start_date, str(game.current_turn), str(game_index_extra))
                 target_path = os.path.join(self.start_date, str(game.current_turn), str(game_index))
                 file_name = natsorted(os.listdir(original_path))[-1]
                 shutil.copy(os.path.join(original_path, file_name), os.path.join(target_path, file_name))
