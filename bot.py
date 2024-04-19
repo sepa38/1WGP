@@ -535,8 +535,11 @@ async def on_message(message):
         user_index = game.passing_table[game.current_turn].index(message.author)
         target_path = os.path.join(game.start_date, str(game.current_turn), str(user_index))
         files = os.listdir(target_path)
+        accepted_subject = message.content.replace("!send_subject", "")
         with open(os.path.join(target_path, f"{len(files)}_subject.txt"), mode = "w") as f:
-            f.write(message.content.replace("!send_subject", ""))
+            f.write(accepted_subject)
+
+        await message.channel.send(f"以下の文章を受理しました\n```\n{accepted_subject}\n```")
 
         game.completed_users.add(message.author.id)
         if len(game.completed_users) == game.number_of_participants:
@@ -564,6 +567,8 @@ async def on_message(message):
         files = os.listdir(target_path)
         file_name = os.path.join(target_path, f"{len(files)}_{attachment.filename}")
         await attachment.save(file_name)
+
+        await message.channel.send(f"以下の画像を受理しました", file=discord.File(file_name))
 
         game.completed_users.add(message.author.id)
         if len(game.completed_users) == game.number_of_participants:
