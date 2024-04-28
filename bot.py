@@ -560,10 +560,11 @@ async def on_message(message):
 
     elif message.content.startswith('!send_picture'):
         if message.channel not in game.individual_channels:
+            await message.channel.send("error: This channel is not for gaming")
             return
 
         if message.channel.name != message.author.name or not message.author.guild_permissions.administrator:
-            print("rejected")
+            await message.channel.send("rejected")
             return
 
         if not game.is_ongoing:
