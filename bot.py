@@ -530,7 +530,7 @@ async def on_message(message):
         if message.channel not in game.individual_channels:
             return
 
-        if message.channel.name != message.author.name:
+        if message.channel.name != message.author.name or not message.author.guild_permissions.administrator:
             return
 
         if not game.is_ongoing:
@@ -541,7 +541,11 @@ async def on_message(message):
             await message.channel.send("現在、絵を送信するフェーズです。\n```\n!send_picture\n```\nを用いて画像を送信してください")
             return
 
-        user_index = game.passing_table[game.current_turn].index(message.author)
+        for user_i in game.participants:
+            if user_i.name == message.channel.name:
+                author = user_i
+                break
+        user_index = game.passing_table[game.current_turn].index(author)
         target_path = os.path.join(game.start_date, str(game.current_turn), str(user_index))
         files = os.listdir(target_path)
         accepted_subject = message.content.replace("!send_subject", "")
@@ -550,7 +554,7 @@ async def on_message(message):
 
         await message.channel.send(f"以下の文章を受理しました\n```\n{accepted_subject}\n```")
 
-        game.completed_users.add(message.author.id)
+        game.completed_users.add(author.id)
         if len(game.completed_users) == game.number_of_participants:
             await game.next_job()
 
@@ -558,7 +562,7 @@ async def on_message(message):
         if message.channel not in game.individual_channels:
             return
 
-        if message.channel.name != message.author.name:
+        if message.channel.name != message.author.name or not message.author.guild_permissions.administrator:
             return
 
         if not game.is_ongoing:
@@ -569,7 +573,11 @@ async def on_message(message):
             await message.channel.send("現在、お題もしくは絵の説明を送信するフェーズです。\n```\n!send_subject\n```\nを用いて文章を送信してください")
             return
 
-        user_index = game.passing_table[game.current_turn].index(message.author)
+        for user_i in game.participants:
+            if user_i.name == message.channel.name:
+                author = user_i
+                break
+        user_index = game.passing_table[game.current_turn].index(author)
         target_path = os.path.join(game.start_date, str(game.current_turn), str(user_index))
 
         attachment = message.attachments[0]
@@ -579,7 +587,7 @@ async def on_message(message):
 
         await message.channel.send(f"以下の画像を受理しました", file=discord.File(file_name))
 
-        game.completed_users.add(message.author.id)
+        game.completed_users.add(author.id)
         if len(game.completed_users) == game.number_of_participants:
             await game.next_job()
 
