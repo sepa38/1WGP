@@ -176,29 +176,28 @@ class Game:
                         break
 
                 # まず後ろにさかのぼる
-                turn = self.current_turn
+                turn_extra = self.current_turn
                 game_index_extra = game_index
                 subject = ""
-                while turn >= 0:
-                    target_path = os.path.join(self.start_date, str(turn), str(game_index_extra))
+                while turn_extra >= 0:
+                    target_path = os.path.join(self.start_date, str(turn_extra), str(game_index_extra))
                     try:
                         file_name = natsorted(os.listdir(target_path))[-1]
                         with open(os.path.join(target_path, file_name), mode = "r") as f:
                             subject = f.read()
                         break
                     except:
-                        turn -= 2
+                        turn_extra -= 2
 
                 # それでも無いときは他のゲームから持ってくる
                 if subject == "":
-                    turn = self.current_turn
                     turn_difference = self.number_of_participants - 1
                     while turn_difference > 0:
                         turn_extra = self.current_turn + turn_difference
                         if turn_extra < self.number_of_participants:
                             alternative_user = self.passing_table[turn_extra][game_index]
                             game_index_extra = self.passing_table[self.current_turn].index(alternative_user)
-                            target_path = os.path.join(self.start_date, str(turn), str(game_index_extra))
+                            target_path = os.path.join(self.start_date, str(self.current_turn), str(game_index_extra))
                             try:
                                 file_name = natsorted(os.listdir(target_path))[-1]
                                 with open(os.path.join(target_path, file_name), mode = "r") as f:
@@ -211,7 +210,7 @@ class Game:
                         if turn_extra >= 0:
                             alternative_user = self.passing_table[turn_extra][game_index]
                             game_index_extra = self.passing_table[self.current_turn].index(alternative_user)
-                            target_path = os.path.join(self.start_date, str(turn), str(game_index_extra))
+                            target_path = os.path.join(self.start_date, str(self.current_turn), str(game_index_extra))
                             try:
                                 file_name = natsorted(os.listdir(target_path))[-1]
                                 with open(os.path.join(target_path, file_name), mode = "r") as f:
@@ -224,13 +223,13 @@ class Game:
 
                 await destination_channel.send(f"次のお題について {self.deadline} 23:59 までに絵を描いて送信してください\n```\n{subject}\n```")
 
-                if (self.current_turn, game_index) == (turn, game_index_extra):
+                if (self.current_turn, game_index) == (turn_extra, game_index_extra):
                     continue
 
                 self.unsubmitted_tasks[(self.current_turn, game_index)] = self.passing_table[self.current_turn][game_index]
-                self.passing_table[self.current_turn][game_index] = self.passing_table[turn][game_index_extra]
+                self.passing_table[self.current_turn][game_index] = self.passing_table[turn_extra][game_index_extra]
                 self.save()
-                original_path = os.path.join(self.start_date, str(game.current_turn), str(game_index_extra))
+                original_path = os.path.join(self.start_date, str(turn_extra), str(game_index_extra))
                 target_path = os.path.join(self.start_date, str(game.current_turn), str(game_index))
                 file_name = natsorted(os.listdir(original_path))[-1]
                 shutil.copy(os.path.join(original_path, file_name), os.path.join(target_path, file_name))
@@ -244,16 +243,16 @@ class Game:
                     if destination_channel.name == next_user.name:
                         break
 
-                turn = self.current_turn
+                turn_extra = self.current_turn
                 game_index_extra = game_index
                 file_name = ""
-                while turn >= 0:
-                    target_path = os.path.join(self.start_date, str(self.current_turn), str(game_index_extra))
+                while turn_extra >= 0:
+                    target_path = os.path.join(self.start_date, str(turn_extra), str(game_index_extra))
                     try:
                         file_name = natsorted(os.listdir(target_path))[-1]
                         break
                     except:
-                        turn -= 2
+                        turn_extra -= 2
 
                 if file_name == "":
                     turn_difference = self.number_of_participants - 1
@@ -261,8 +260,9 @@ class Game:
                         turn = self.current_turn + turn_difference
                         if turn < self.number_of_participants:
                             alternative_user = self.passing_table[turn][game_index]
-                            game_index_extra = self.passing_table[self.current_turn].index(alternative_user)
-                            target_path = os.path.join(self.start_date, str(self.current_turn), str(game_index_extra))
+                            turn_extra = self.current_turn
+                            game_index_extra = self.passing_table[turn_extra].index(alternative_user)
+                            target_path = os.path.join(self.start_date, str(turn_extra), str(game_index_extra))
                             try:
                                 file_name = natsorted(os.listdir(target_path))[-1]
                                 break
@@ -272,8 +272,9 @@ class Game:
                         turn = self.current_turn - turn_difference
                         if 0 <= turn < self.number_of_participants:
                             alternative_user = self.passing_table[turn][game_index]
-                            game_index_extra = self.passing_table[self.current_turn].index(alternative_user)
-                            target_path = os.path.join(self.start_date, str(self.current_turn), str(game_index_extra))
+                            turn_extra = self.current_turn
+                            game_index_extra = self.passing_table[turn_extra].index(alternative_user)
+                            target_path = os.path.join(self.start_date, str(turn_extra), str(game_index_extra))
                             try:
                                 file_name = natsorted(os.listdir(target_path))[-1]
                                 break
@@ -284,13 +285,13 @@ class Game:
 
                 await destination_channel.send(f"次の絵の説明を {self.deadline} 23:59 までに送信してください", file=discord.File(os.path.join(target_path, file_name)))
                 print((self.current_turn, game_index),  (turn, game_index_extra), (self.current_turn, game_index) == (turn, game_index_extra))
-                if (self.current_turn, game_index) == (turn, game_index_extra):
+                if (self.current_turn, game_index) == (turn_extra, game_index_extra):
                     continue
 
                 self.unsubmitted_tasks[(self.current_turn, game_index)] = self.passing_table[self.current_turn][game_index]
-                self.passing_table[self.current_turn][game_index] = self.passing_table[turn][game_index_extra]
+                self.passing_table[self.current_turn][game_index] = self.passing_table[turn_extra][game_index_extra]
                 self.save()
-                original_path = os.path.join(self.start_date, str(game.current_turn), str(game_index_extra))
+                original_path = os.path.join(self.start_date, str(turn_extra), str(game_index_extra))
                 target_path = os.path.join(self.start_date, str(game.current_turn), str(game_index))
                 file_name = natsorted(os.listdir(original_path))[-1]
                 shutil.copy(os.path.join(original_path, file_name), os.path.join(target_path, file_name))
@@ -529,7 +530,7 @@ async def on_message(message):
         if message.channel not in game.individual_channels:
             return
 
-        if message.channel.name != message.author.name:
+        if message.channel.name != message.author.name or not message.author.guild_permissions.administrator:
             return
 
         if not game.is_ongoing:
@@ -540,7 +541,11 @@ async def on_message(message):
             await message.channel.send("現在、絵を送信するフェーズです。\n```\n!send_picture\n```\nを用いて画像を送信してください")
             return
 
-        user_index = game.passing_table[game.current_turn].index(message.author)
+        for user_i in game.participants:
+            if user_i.name == message.channel.name:
+                author = user_i
+                break
+        user_index = game.passing_table[game.current_turn].index(author)
         target_path = os.path.join(game.start_date, str(game.current_turn), str(user_index))
         files = os.listdir(target_path)
         accepted_subject = message.content.replace("!send_subject", "")
@@ -549,7 +554,7 @@ async def on_message(message):
 
         await message.channel.send(f"以下の文章を受理しました\n```\n{accepted_subject}\n```")
 
-        game.completed_users.add(message.author.id)
+        game.completed_users.add(author.id)
         if len(game.completed_users) == game.number_of_participants:
             await game.next_job()
 
@@ -557,7 +562,8 @@ async def on_message(message):
         if message.channel not in game.individual_channels:
             return
 
-        if message.channel.name != message.author.name:
+        if message.channel.name != message.author.name or not message.author.guild_permissions.administrator:
+            print("rejected")
             return
 
         if not game.is_ongoing:
@@ -568,7 +574,11 @@ async def on_message(message):
             await message.channel.send("現在、お題もしくは絵の説明を送信するフェーズです。\n```\n!send_subject\n```\nを用いて文章を送信してください")
             return
 
-        user_index = game.passing_table[game.current_turn].index(message.author)
+        for user_i in game.participants:
+            if user_i.name == message.channel.name:
+                author = user_i
+                break
+        user_index = game.passing_table[game.current_turn].index(author)
         target_path = os.path.join(game.start_date, str(game.current_turn), str(user_index))
 
         attachment = message.attachments[0]
@@ -578,7 +588,7 @@ async def on_message(message):
 
         await message.channel.send(f"以下の画像を受理しました", file=discord.File(file_name))
 
-        game.completed_users.add(message.author.id)
+        game.completed_users.add(author.id)
         if len(game.completed_users) == game.number_of_participants:
             await game.next_job()
 
