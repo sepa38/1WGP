@@ -348,11 +348,13 @@ async def on_message(message):
     if game_admin_role is None:
         game_admin_role = await message.guild.create_role(name="1WGP_admin")
 
+    have_admin_permission = message.author.guild_permissions.administrator or game_admin_role in message.author.roles
+
     if not message.content.startswith("!"):
         return
 
     elif message.content.startswith("!set_home_channel"):
-        if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
+        if not have_admin_permission:
             await message.channel.send("このコマンドを実行する権限がありません")
             return
 
@@ -370,7 +372,7 @@ async def on_message(message):
         if message.channel.id != HOME_CHANNEL_ID:
             return
 
-        if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
+        if not have_admin_permission:
             await message.channel.send("このコマンドを実行する権限がありません")
             return
 
@@ -384,7 +386,7 @@ async def on_message(message):
         if message.channel.id != HOME_CHANNEL_ID:
             return
 
-        if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
+        if not have_admin_permission:
             await message.channel.send("このコマンドを実行する権限がありません")
             return
 
@@ -400,7 +402,7 @@ async def on_message(message):
         if message.channel.id != HOME_CHANNEL_ID:
             return
 
-        if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
+        if not have_admin_permission:
             await message.channel.send("このコマンドを実行する権限がありません")
             return
 
@@ -421,7 +423,7 @@ async def on_message(message):
         if message.channel.id != HOME_CHANNEL_ID:
             return
 
-        if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
+        if not have_admin_permission:
             await message.channel.send("このコマンドを実行する権限がありません")
             return
 
@@ -433,7 +435,7 @@ async def on_message(message):
         if message.channel.id != HOME_CHANNEL_ID:
             return
 
-        if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
+        if not have_admin_permission:
             await message.channel.send("このコマンドを実行する権限がありません")
             return
 
@@ -441,7 +443,7 @@ async def on_message(message):
             await game.next_job()
 
     elif message.content.startswith("!show_subjects"):
-        if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
+        if not have_admin_permission:
             await message.channel.send("このコマンドを実行する権限がありません")
             return
 
@@ -457,7 +459,7 @@ async def on_message(message):
             await message.channel.send("\n".join(subjects))
 
     elif message.content.startswith("!show_turn"):
-        if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
+        if not have_admin_permission:
             await message.channel.send("このコマンドを実行する権限がありません")
             return
 
@@ -468,7 +470,7 @@ async def on_message(message):
         if message.channel.id != HOME_CHANNEL_ID:
             return
 
-        if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
+        if not have_admin_permission:
             await message.channel.send("このコマンドを実行する権限がありません")
             return
 
@@ -530,7 +532,7 @@ async def on_message(message):
         if message.channel not in game.individual_channels:
             return
 
-        if message.channel.name != message.author.name or game_admin_role not in message.author.roles:
+        if message.channel.name != message.author.name or not have_admin_permission:
             return
 
         if not game.is_ongoing:
@@ -563,7 +565,7 @@ async def on_message(message):
             await message.channel.send("error: This channel is not for gaming")
             return
 
-        if message.channel.name != message.author.name or game_admin_role not in message.author.roles:
+        if message.channel.name != message.author.name or not have_admin_permission:
             await message.channel.send("rejected")
             return
 
