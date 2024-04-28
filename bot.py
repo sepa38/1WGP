@@ -284,7 +284,6 @@ class Game:
                         turn_difference -= 1
 
                 await destination_channel.send(f"次の絵の説明を {self.deadline} 23:59 までに送信してください", file=discord.File(os.path.join(target_path, file_name)))
-                print((self.current_turn, game_index),  (turn, game_index_extra), (self.current_turn, game_index) == (turn, game_index_extra))
                 if (self.current_turn, game_index) == (turn_extra, game_index_extra):
                     continue
 
@@ -348,11 +347,13 @@ async def on_message(message):
     if game_admin_role is None:
         game_admin_role = await message.guild.create_role(name="1WGP_admin")
 
+    have_admin_permission = message.author.guild_permissions.administrator or game_admin_role in message.author.roles
+
     if not message.content.startswith("!"):
         return
 
     elif message.content.startswith("!set_home_channel"):
-        if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
+        if not have_admin_permission:
             await message.channel.send("このコマンドを実行する権限がありません")
             return
 
@@ -370,7 +371,7 @@ async def on_message(message):
         if message.channel.id != HOME_CHANNEL_ID:
             return
 
-        if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
+        if not have_admin_permission:
             await message.channel.send("このコマンドを実行する権限がありません")
             return
 
@@ -384,7 +385,7 @@ async def on_message(message):
         if message.channel.id != HOME_CHANNEL_ID:
             return
 
-        if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
+        if not have_admin_permission:
             await message.channel.send("このコマンドを実行する権限がありません")
             return
 
@@ -400,7 +401,7 @@ async def on_message(message):
         if message.channel.id != HOME_CHANNEL_ID:
             return
 
-        if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
+        if not have_admin_permission:
             await message.channel.send("このコマンドを実行する権限がありません")
             return
 
@@ -421,7 +422,7 @@ async def on_message(message):
         if message.channel.id != HOME_CHANNEL_ID:
             return
 
-        if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
+        if not have_admin_permission:
             await message.channel.send("このコマンドを実行する権限がありません")
             return
 
@@ -433,7 +434,7 @@ async def on_message(message):
         if message.channel.id != HOME_CHANNEL_ID:
             return
 
-        if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
+        if not have_admin_permission:
             await message.channel.send("このコマンドを実行する権限がありません")
             return
 
@@ -441,7 +442,7 @@ async def on_message(message):
             await game.next_job()
 
     elif message.content.startswith("!show_subjects"):
-        if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
+        if not have_admin_permission:
             await message.channel.send("このコマンドを実行する権限がありません")
             return
 
@@ -457,7 +458,7 @@ async def on_message(message):
             await message.channel.send("\n".join(subjects))
 
     elif message.content.startswith("!show_turn"):
-        if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
+        if not have_admin_permission:
             await message.channel.send("このコマンドを実行する権限がありません")
             return
 
@@ -468,7 +469,7 @@ async def on_message(message):
         if message.channel.id != HOME_CHANNEL_ID:
             return
 
-        if not (message.author.guild_permissions.administrator or game_admin_role in message.author.roles):
+        if not have_admin_permission:
             await message.channel.send("このコマンドを実行する権限がありません")
             return
 
@@ -530,7 +531,7 @@ async def on_message(message):
         if message.channel not in game.individual_channels:
             return
 
-        if message.channel.name != message.author.name or not message.author.guild_permissions.administrator:
+        if message.channel.name != message.author.name and not have_admin_permission:
             return
 
         if not game.is_ongoing:
@@ -562,7 +563,7 @@ async def on_message(message):
         if message.channel not in game.individual_channels:
             return
 
-        if message.channel.name != message.author.name or not message.author.guild_permissions.administrator:
+        if message.channel.name != message.author.name and not have_admin_permission:
             return
 
         if not game.is_ongoing:
