@@ -532,7 +532,7 @@ async def on_message(message):
         if message.channel not in game.individual_channels:
             return
 
-        if message.channel.name != message.author.name or not have_admin_permission:
+        if message.channel.name != message.author.name and not have_admin_permission:
             return
 
         if not game.is_ongoing:
@@ -565,7 +565,7 @@ async def on_message(message):
             await message.channel.send("error: This channel is not for gaming")
             return
 
-        if message.channel.name != message.author.name or not have_admin_permission:
+        if message.channel.name != message.author.name and not have_admin_permission:
             await message.channel.send("rejected")
             return
 
