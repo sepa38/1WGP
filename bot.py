@@ -2,6 +2,7 @@ import os
 import shutil
 import datetime
 import random
+import asyncio
 
 import discord
 from discord.ext import tasks
@@ -557,6 +558,7 @@ async def on_message(message):
 
         game.completed_users.add(author.id)
         if len(game.completed_users) == game.number_of_participants:
+            await asyncio.sleep(300)
             await game.next_job()
 
     elif message.content.startswith('!send_picture'):
@@ -590,6 +592,7 @@ async def on_message(message):
 
         game.completed_users.add(author.id)
         if len(game.completed_users) == game.number_of_participants:
+            await asyncio.sleep(300)
             await game.next_job()
 
     else:
