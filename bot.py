@@ -47,6 +47,7 @@ class Game:
         self.deadline = str(datetime.date.today() + datetime.timedelta(days=1))
         self.is_accepting = 0
         self.is_ongoing = 1
+        self.is_in_phase_transition = 0
         self.current_turn = 0
         self.completed_users = set()
         self.unsubmitted_tasks = dict()
@@ -557,9 +558,13 @@ async def on_message(message):
         await message.channel.send(f"以下の文章を受理しました\n```\n{accepted_subject}\n```")
 
         game.completed_users.add(author.id)
-        if len(game.completed_users) == game.number_of_participants:
+        if len(game.completed_users) == game.number_of_participants and not game.is_in_phase_transition:
+            game.is_in_phase_transition = 1
+
             await asyncio.sleep(300)
             await game.next_job()
+            
+            game.is_in_phase_transition = 0
 
     elif message.content.startswith('!send_picture'):
         if message.channel not in game.individual_channels:
@@ -591,9 +596,13 @@ async def on_message(message):
         await message.channel.send(f"以下の画像を受理しました", file=discord.File(file_name))
 
         game.completed_users.add(author.id)
-        if len(game.completed_users) == game.number_of_participants:
+        if len(game.completed_users) == game.number_of_participants and not game.is_in_phase_transition:
+            game.is_in_phase_transition = 1
+
             await asyncio.sleep(300)
             await game.next_job()
+            
+            game.is_in_phase_transition = 0
 
     else:
         await message.channel.send("定義されていないコマンドです")
@@ -660,7 +669,7 @@ async def daily_job():
     now = datetime.datetime.now().strftime("%H:%M")
     if now == "23:59":
         today = str(datetime.date.today())
-        if today == game.deadline:
+        if today == game.deadline and not game.is_in_phase_transition:
             await game.next_job()
 
 
