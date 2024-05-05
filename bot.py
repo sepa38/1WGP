@@ -21,6 +21,7 @@ class Game:
         self.individual_channels = []
         self.is_accepting = 0
         self.is_ongoing = 0
+        self.is_in_phase_transition = 0
 
         try:
             shutil.rmtree("latest_game")
@@ -113,6 +114,7 @@ class Game:
             turn, game_index, skipped_user_id = map(int, task.split())
             skipped_user = client.get_user(skipped_user_id)
             self.unsubmitted_tasks[(turn, game_index)] = skipped_user
+        self.is_in_phase_transition = 0
 
     def append_participant(self, user):
         self.participants.append(user)
