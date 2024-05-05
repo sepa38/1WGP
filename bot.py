@@ -117,16 +117,20 @@ class Game:
         self.is_in_phase_transition = 0
 
     def append_participant(self, user):
-        self.participants.append(user)
+        if user not in self.participants:
+            self.participants.append(user)
 
     def remove_participant(self, user):
-        self.participants.remove(user)
+        if user in self.participants:
+            self.participants.remove(user)
 
     def append_channel(self, channel):
-        self.individual_channels.append(channel)
+        if channel not in self.individual_channels:
+            self.individual_channels.append(channel)
 
     def remove_channel(self, channel):
-        self.individual_channels.remove(channel)
+        if channel in self.individual_channels:
+            self.individual_channels.remove(channel)
 
     def update_deadline(self, time_difference):
         self.deadline = str(datetime.date.today() + time_difference)
