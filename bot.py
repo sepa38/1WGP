@@ -673,10 +673,15 @@ async def on_reaction_remove(reaction, user):
 async def daily_job():
     global game
     now = datetime.datetime.now().strftime("%H:%M")
-    if now == "23:59":
-        today = str(datetime.date.today())
-        if today == game.deadline and not game.is_in_phase_transition:
-            await game.next_job()
+    today = str(datetime.date.today())
+
+    if game.is_in_phase_transition:
+        return
+
+    if today == game.deadline and now == "23:59":
+        await game.next_job()
+    elif today > game.deadline:
+        await game.next_job()
 
 
 client.run(TOKEN)
