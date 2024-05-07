@@ -514,6 +514,24 @@ async def on_message(message):
 
                 await channel.send("このチャンネルで画像、テキストの送受信をしてください")
 
+    elif message.content.startswith("!remind"):
+        if message.channel.id != HOME_CHANNEL_ID:
+            return
+
+        if not have_admin_permission:
+            await message.channel.send("このコマンドを実行する権限がありません")
+            return
+
+        if game.is_ongoing:
+            sending_object = "お題" if game.current_turn == 0 else "絵" if game.current_turn % 2 else "絵の説明"
+            for user_i in game.participants:
+                if user_i in game.completed_users:
+                    continue
+                for channel_i in game.individual_channels:
+                    if channel_i.name == user_i.name:
+                        await channel_i.send(f"現在提出が確認されていません。{game.deadline} 23:59 までに{sending_object}を送信してください。")
+                        break
+
     elif message.content.startswith("!help"):
         help_images = [
             discord.File(os.path.join("help", "set_home_channel.png")),
@@ -563,7 +581,7 @@ async def on_message(message):
 
         await message.channel.send(f"以下の文章を受理しました\n```\n{accepted_subject}\n```")
 
-        game.completed_users.add(author.id)
+        game.completed_users.add(author)
         if len(game.completed_users) == game.number_of_participants and not game.is_in_phase_transition:
             game.is_in_phase_transition = 1
 
