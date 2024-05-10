@@ -201,11 +201,12 @@ class Game:
                 if subject == "":
                     turn_difference = self.number_of_participants - 1
                     while turn_difference > 0:
-                        turn_extra = self.current_turn + turn_difference
-                        if turn_extra < self.number_of_participants:
-                            alternative_user = self.passing_table[turn_extra][game_index]
-                            game_index_extra = self.passing_table[self.current_turn].index(alternative_user)
-                            target_path = os.path.join(self.start_date, str(self.current_turn), str(game_index_extra))
+                        turn = self.current_turn + turn_difference
+                        if turn < self.number_of_participants:
+                            alternative_user = self.passing_table[turn][game_index]
+                            turn_extra = self.current_turn
+                            game_index_extra = self.passing_table[turn_extra].index(alternative_user)
+                            target_path = os.path.join(self.start_date, str(turn_extra), str(game_index_extra))
                             try:
                                 file_name = natsorted(os.listdir(target_path))[-1]
                                 with open(os.path.join(target_path, file_name), mode = "r") as f:
@@ -214,11 +215,12 @@ class Game:
                             except:
                                 pass
 
-                        turn_extra = self.current_turn - turn_difference
-                        if turn_extra >= 0:
-                            alternative_user = self.passing_table[turn_extra][game_index]
-                            game_index_extra = self.passing_table[self.current_turn].index(alternative_user)
-                            target_path = os.path.join(self.start_date, str(self.current_turn), str(game_index_extra))
+                        turn = self.current_turn - turn_difference
+                        if 0 <= turn < self.number_of_participants:
+                            alternative_user = self.passing_table[turn][game_index]
+                            turn_extra = self.current_turn
+                            game_index_extra = self.passing_table[turn_extra].index(alternative_user)
+                            target_path = os.path.join(self.start_date, str(turn_extra), str(game_index_extra))
                             try:
                                 file_name = natsorted(os.listdir(target_path))[-1]
                                 with open(os.path.join(target_path, file_name), mode = "r") as f:
