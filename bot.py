@@ -15,6 +15,7 @@ class Game:
         self.individual_channels = []
         self.is_accepting = 1
         self.is_ongoing = 0
+        self.is_in_phase_transition = 0
 
     def reset(self):
         self.participants = []
