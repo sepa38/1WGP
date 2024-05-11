@@ -240,7 +240,7 @@ class Game:
                 self.passing_table[self.current_turn][game_index] = self.passing_table[turn_extra][game_index_extra]
                 self.save()
                 original_path = os.path.join(self.start_date, str(turn_extra), str(game_index_extra))
-                target_path = os.path.join(self.start_date, str(game.current_turn), str(game_index))
+                target_path = os.path.join(self.start_date, str(self.current_turn), str(game_index))
                 file_name = natsorted(os.listdir(original_path))[-1]
                 shutil.copy(os.path.join(original_path, file_name), os.path.join(target_path, file_name))
 
@@ -301,7 +301,7 @@ class Game:
                 self.passing_table[self.current_turn][game_index] = self.passing_table[turn_extra][game_index_extra]
                 self.save()
                 original_path = os.path.join(self.start_date, str(turn_extra), str(game_index_extra))
-                target_path = os.path.join(self.start_date, str(game.current_turn), str(game_index))
+                target_path = os.path.join(self.start_date, str(self.current_turn), str(game_index))
                 file_name = natsorted(os.listdir(original_path))[-1]
                 shutil.copy(os.path.join(original_path, file_name), os.path.join(target_path, file_name))
 
