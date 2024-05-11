@@ -205,9 +205,9 @@ class Game:
                         if turn < self.number_of_participants:
                             alternative_user = self.passing_table[turn][game_index]
                             turn_extra = self.current_turn
-                            game_index_extra = self.passing_table[turn_extra].index(alternative_user)
-                            target_path = os.path.join(self.start_date, str(turn_extra), str(game_index_extra))
                             try:
+                                game_index_extra = self.passing_table[turn_extra].index(alternative_user)
+                                target_path = os.path.join(self.start_date, str(turn_extra), str(game_index_extra))
                                 file_name = natsorted(os.listdir(target_path))[-1]
                                 with open(os.path.join(target_path, file_name), mode = "r") as f:
                                     subject = f.read()
@@ -219,9 +219,9 @@ class Game:
                         if 0 <= turn < self.number_of_participants:
                             alternative_user = self.passing_table[turn][game_index]
                             turn_extra = self.current_turn
-                            game_index_extra = self.passing_table[turn_extra].index(alternative_user)
-                            target_path = os.path.join(self.start_date, str(turn_extra), str(game_index_extra))
                             try:
+                                game_index_extra = self.passing_table[turn_extra].index(alternative_user)
+                                target_path = os.path.join(self.start_date, str(turn_extra), str(game_index_extra))
                                 file_name = natsorted(os.listdir(target_path))[-1]
                                 with open(os.path.join(target_path, file_name), mode = "r") as f:
                                     subject = f.read()
@@ -271,9 +271,9 @@ class Game:
                         if turn < self.number_of_participants:
                             alternative_user = self.passing_table[turn][game_index]
                             turn_extra = self.current_turn
-                            game_index_extra = self.passing_table[turn_extra].index(alternative_user)
-                            target_path = os.path.join(self.start_date, str(turn_extra), str(game_index_extra))
                             try:
+                                game_index_extra = self.passing_table[turn_extra].index(alternative_user)
+                                target_path = os.path.join(self.start_date, str(turn_extra), str(game_index_extra))
                                 file_name = natsorted(os.listdir(target_path))[-1]
                                 break
                             except:
@@ -283,9 +283,9 @@ class Game:
                         if 0 <= turn < self.number_of_participants:
                             alternative_user = self.passing_table[turn][game_index]
                             turn_extra = self.current_turn
-                            game_index_extra = self.passing_table[turn_extra].index(alternative_user)
-                            target_path = os.path.join(self.start_date, str(turn_extra), str(game_index_extra))
                             try:
+                                game_index_extra = self.passing_table[turn_extra].index(alternative_user)
+                                target_path = os.path.join(self.start_date, str(turn_extra), str(game_index_extra))
                                 file_name = natsorted(os.listdir(target_path))[-1]
                                 break
                             except:
