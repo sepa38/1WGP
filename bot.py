@@ -693,6 +693,10 @@ async def on_reaction_remove(reaction, user):
 @tasks.loop(seconds=60)
 async def daily_job():
     global game
+
+    if not game.is_ongoing:
+        return
+
     now = datetime.datetime.now().strftime("%H:%M")
     today = str(datetime.date.today())
 
