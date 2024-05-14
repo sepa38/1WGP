@@ -243,6 +243,16 @@ async def on_message(message):
         if game.is_ongoing:
             game.is_waiting_for_next = 0
 
+    elif message.content.startswith("!reboot"):
+        if message.channel.id != HOME_CHANNEL_ID:
+            return
+
+        if not have_admin_permission:
+            await message.channel.send("このコマンドを実行する権限がありません")
+            return
+
+        exit()
+
     elif message.content.startswith("!help"):
         help_images = [
             discord.File(os.path.join("help", "set_home_channel.png")),
