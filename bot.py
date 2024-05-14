@@ -36,6 +36,8 @@ async def on_ready():
         game.load()
         if game.is_ongoing:
             print("Latest game loaded")
+            if game.current_turn == game.number_of_participants - 1:
+                await game.next_job()
     except:
         game.is_accepting = 0
         game.is_ongoing = 0
@@ -229,6 +231,17 @@ async def on_message(message):
                     if channel_i.name == user_i.name:
                         await channel_i.send(f"現在提出が確認されていません。{game.deadline} 23:59 までに{sending_object}を送信してください。")
                         break
+
+    elif message.content.startswith("!next"):
+        if message.channel.id != HOME_CHANNEL_ID:
+            return
+
+        if not have_admin_permission:
+            await message.channel.send("このコマンドを実行する権限がありません")
+            return
+
+        if game.is_ongoing:
+            game.is_waiting_for_next = 0
 
     elif message.content.startswith("!help"):
         help_images = [

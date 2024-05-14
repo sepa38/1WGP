@@ -2,6 +2,7 @@ import os
 import shutil
 import datetime
 import random
+import asyncio
 
 import discord
 from natsort import natsorted
@@ -49,6 +50,7 @@ class Game:
         self.is_accepting = 0
         self.is_ongoing = 1
         self.is_in_phase_transition = 0
+        self.is_waiting_for_next = 1
         self.current_turn = 0
         self.completed_users = set()
         self.unsubmitted_tasks = dict()
@@ -115,6 +117,7 @@ class Game:
             skipped_user = self.client.get_user(skipped_user_id)
             self.unsubmitted_tasks[(turn, game_index)] = skipped_user
         self.is_in_phase_transition = 0
+        self.is_waiting_for_next = 1
 
     def append_participant(self, user):
         if user not in self.participants:
@@ -138,7 +141,7 @@ class Game:
     async def next_job(self):
         if self.current_turn == self.number_of_participants - 1:
             home_channel = self.client.get_channel(self.HOME_CHANNEL_ID)
-            await home_channel.send("ゲームが終了しました")
+            await home_channel.send("ゲームが終了しました。\n```\n!next\n```を用いて結果の表示を行ってください")
 
             for game_index in range(self.number_of_participants):
                 first_participant = self.passing_table[0][game_index]
@@ -154,6 +157,9 @@ class Game:
                         await thread.send(f"{creator.mention} skipped")
                         continue
 
+                    while self.is_waiting_for_next:
+                        await asyncio.sleep(1)
+
                     if (turn, game_index) in self.unsubmitted_tasks:
                         skipped_user = self.unsubmitted_tasks[(turn, game_index)]
                         await thread.send(f"{skipped_user.mention} skipped")
@@ -165,7 +171,10 @@ class Game:
 
                     else:
                         await thread.send(f"{creator.mention}", file=discord.File(os.path.join(target_path, file_name)))
+                    
+                    self.is_waiting_for_next = 1
 
+            await home_channel.send("全ての結果表示が終了しました")
             self.reset()
             return
 
