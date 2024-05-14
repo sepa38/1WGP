@@ -32,6 +32,21 @@ client = discord.Client(intents=discord.Intents.all())
 async def on_ready():
     global game
     game = Game(client, HOME_CHANNEL_ID)
+
+    if HOME_CHANNEL_ID is not None:
+        category = client.get_channel(HOME_CHANNEL_ID).category
+        log_channel = None
+        for channel_i in category.text_channels:
+            if channel_i.name == "log":
+                log_channel = channel_i
+        if log_channel is None:
+            permission = {
+                category.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                client.user: discord.PermissionOverwrite(read_messages=True)
+            }
+            log_channel = await category.create_text_channel(name="log", overwrites=permission)
+        await log_channel.send("Activated")
+
     try:
         game.load()
         if game.is_ongoing:
